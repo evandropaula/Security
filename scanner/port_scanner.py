@@ -338,4 +338,4 @@ def scan(output_directory: str,
 
 
 if __name__ == "__main__":
-    scan("C:\\Temp\\scan", "ec2-54-203-22-225.us-west-2.compute.amazonaws.com")
+    scan("C:\\Temp\\scan", "www.google.com")
