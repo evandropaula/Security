@@ -17,8 +17,57 @@ Attention:
         - Physical Cores = 4
         - Logical Cores = 8
 
-    - It takes ~ 18 minutes to scan the ports for a given target host with current environment and settings
+    - It takes ~ 18 minutes to scan the ports for a given target host with current environment and
+        settings
         - Increase the max_processes_factor_per_cpu to boost parallelism
+
+Recommendations:
+    - AWS -> Enable GuardDuty and monitor threat event as the following
+        [
+          {
+            "schemaVersion": "2.0",
+            "accountId": "",
+            "region": "us-west-2",
+            "partition": "aws",
+            "id": "",
+            "arn": "",
+            "type": "Recon:EC2/PortProbeUnprotectedPort",
+            "resource": {
+              "resourceType": "Instance",
+              "instanceDetails": {
+                "instanceId": "",
+                "instanceType": "t2.micro",
+                "launchTime": "2018-04-17T18:55:49Z",
+
+                ...
+
+              }
+            },
+            "service": {
+              "serviceName": "guardduty",
+              "detectorId": "",
+              "action": {
+                "actionType": "PORT_PROBE",
+
+            ...
+
+              "resourceRole": "TARGET",
+              "additionalInfo": {
+                "threatName": "Scanner",
+                "threatListName": "ProofPoint"
+              },
+              "eventFirstSeen": "2018-04-17T19:31:08Z",
+              "eventLastSeen": "2018-04-17T22:07:07Z",
+              "archived": false,
+              "count": 14
+            },
+            "severity": 2,
+            "createdAt": "2018-04-17T19:36:20.448Z",
+            "updatedAt": "2018-04-17T22:17:23.779Z",
+            "title": "Unprotected port on EC2 instance is being probed.",
+            "description": "EC2 instance has an unprotected port which is being probed by a known malicious host."
+          }
+        ]
 
 """
 
@@ -216,33 +265,6 @@ def try_get_ipv4(target_host: str) -> object:
         return None
 
 
-def try_get_hostname(target_ipv4: object):
-    """Return target host name based on the IPv4 address
-
-    Args:
-        target_ipv4: The target host IPv4 address.
-
-    Returns:
-        str: The target host IPv4 address if it was resolved properly.
-        None: If target host IPv4 address if it was not resolved.
-
-    """
-
-    try:
-        target_name_tuple = gethostbyaddr(target_ipv4)
-
-        # Returns a three-item tuple of the form (hostname, aliaslist, ipaddrlist)
-        print("Name is '{0}' for IPv4 '{1}'.".format(target_name_tuple, target_ipv4))
-
-        # Returns the hostname only
-        return target_name_tuple[0]
-    except Exception as ex:
-        print("Failed to resolve name for IPv4 address '{0}'. Exception: {1}."
-              .format(target_ipv4, ex))
-
-        return None
-
-
 def scan(output_directory: str,
          target_host: str):
     """Scans target host for opened ports using known ports as well as a broader ranges of ports
@@ -266,11 +288,7 @@ def scan(output_directory: str,
     # Ensures IPv4 can be resolved
     target_ipv4 = try_get_ipv4(target_host)
 
-    if not target_ipv4:
-        return
-
-    # Ensures name can be resolved
-    if not try_get_hostname(target_ipv4):
+    if not target_ipv4 or target_ipv4 == "255.255.255.255":
         return
 
     # Scans target host for common ports
@@ -295,11 +313,16 @@ def scan(output_directory: str,
         3389,   # RPD (Windows)
     ]
 
+    known_open_port_file_path = os.path.join(output_directory, "known_open_ports.txt")
+
     for target_port in known_ports:
         if target_port < 1:
             raise ValueError("Target must be greater than 0.")
 
-        try_connect(target_host, target_port)
+        if try_connect(target_host, target_port):
+            # Write opened ports to an output file
+            with open(known_open_port_file_path, "a") as process_open_port_file:
+                process_open_port_file.write("{0}\n".format(target_port))
 
     # Max degree of parallelism for resource governance purposes
     max_degree_of_parallelism = get_max_degree_of_parallelism()
