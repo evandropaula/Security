@@ -359,6 +359,3 @@ def scan(output_directory: str,
 
     print("\n***** Completed scanning (Elapsed Time => {0}) *****".format(end_time - start_time))
 
-
-if __name__ == "__main__":
-    scan("C:\\Temp\\scan", "www.google.com")
