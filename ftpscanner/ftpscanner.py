@@ -10,7 +10,7 @@ import ftplib
 
 from ftplib import error_reply
 
-def ftp_anonymous_login(host: str) -> bool:
+def try_ftp_anonymous_login(host: str) -> bool:
     """Try to connect to a given FTP server using the 'anonymous' login
     that IT professionals may have left enabled.
 
@@ -33,4 +33,4 @@ def main():
     """Entry point
 
     """
-    ftp_anonymous_login("127.0.0.1")
+    try_ftp_anonymous_login("127.0.0.1")
