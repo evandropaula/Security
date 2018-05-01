@@ -8,8 +8,6 @@ Recommendation:
 
 import ftplib
 
-from ftplib import error_reply
-
 def try_ftp_anonymous_login(host: str) -> bool:
     """Try to connect to a given FTP server using the 'anonymous' login
     that IT professionals may have left enabled.
@@ -28,9 +26,3 @@ def try_ftp_anonymous_login(host: str) -> bool:
     except ConnectionRefusedError as conn_refused_err:
         print(f"FTP anonymous login FAILED for host '{host}'. Exception: {conn_refused_err}.")
         return False
-
-def main():
-    """Entry point
-
-    """
-    try_ftp_anonymous_login("127.0.0.1")
